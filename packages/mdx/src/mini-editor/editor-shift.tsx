@@ -5,9 +5,11 @@ import {
 } from "../smooth-code"
 import React from "react"
 import { codeToText } from "utils"
+import { File } from "../remark/code"
 
 export type CodeFile = CodeStep & {
   name: string
+  codeInDiffLangs?: File[] | []
 }
 
 type EditorPanel = {

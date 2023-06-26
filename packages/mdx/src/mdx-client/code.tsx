@@ -6,18 +6,70 @@ import {
   EditorStep,
 } from "../mini-editor"
 import { CodeHikeConfig } from "../remark/config"
+import { Code } from "../utils/code"
+import { File } from "../remark/code"
 
-export function Code(
-  props: EditorProps & Partial<CodeHikeConfig>
-) {
-  const [step, setStep] = React.useState(props)
+export const LanguageContext = React.createContext({
+  language: "shell",
+  setLanguage: (lang: string) => {},
+})
+
+function getCode(step: CodeProps, language: string) {
+  return {
+    ...step,
+    files: step.files.map(file => {
+      const diffLang =
+        file?.codeInDiffLangs &&
+        file?.codeInDiffLangs.length
+          ? file?.codeInDiffLangs.find(
+              (fileCode: File) => fileCode.code.lang === language
+            )
+          : null
+
+      const code: Code = diffLang?.code ?? file.code
+
+      return {
+        ...file,
+        code,
+      }
+    }),
+  }
+}
+
+type CodeProps = EditorProps & Partial<CodeHikeConfig>
+
+export function Code(props: CodeProps) {
+  const [language, setLanguage] = React.useState(
+    props.files.find(
+      file => file.name === props.northPanel.active
+    )?.code.lang
+  )
+  const [step, setStep] = React.useState(
+    getCode(props, language)
+  )
+
+  React.useEffect(() => {
+    const newStep = getCode(step, language)
+    setStep(newStep)
+  }, [language, getCode, setStep])
 
   function onTabClick(filename: string) {
     const newStep = updateEditorStep(step, filename, null)
+    const newLanguage = newStep.files.find(
+      file => file.name === filename
+    )?.code.lang
+    
+    setLanguage(newLanguage)
     setStep({ ...step, ...newStep })
   }
 
-  return <InnerCode {...step} onTabClick={onTabClick} />
+  return (
+    <LanguageContext.Provider
+      value={{ language, setLanguage }}
+    >
+      <InnerCode {...step} onTabClick={onTabClick} />
+    </LanguageContext.Provider>
+  )
 }
 
 // build the CodeConfig from props and props.codeConfig
@@ -30,6 +82,7 @@ export function mergeCodeConfig<T>(
     lineNumbers,
     showCopyButton,
     showExpandButton,
+    selectLanguages,
     minZoom,
     maxZoom,
     ...rest
@@ -55,6 +108,8 @@ export function mergeCodeConfig<T>(
       showExpandButton == null
         ? props.codeConfig?.showExpandButton
         : showExpandButton,
+    selectLanguages:
+      selectLanguages ?? props.codeConfig?.selectLanguages,
     rows: props.rows,
     debug: props.debug ?? props.codeConfig?.debug,
   }

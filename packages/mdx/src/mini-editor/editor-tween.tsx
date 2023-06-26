@@ -4,7 +4,7 @@ import {
   EditorFrameProps,
 } from "./editor-frame"
 import { TerminalPanel } from "./terminal-panel"
-import { useTransition, EditorStep } from "./editor-shift"
+import { useTransition, EditorStep, CodeFile } from "./editor-shift"
 import { CodeConfig } from "../smooth-code"
 import { useLayoutEffect } from "../utils"
 import { CopyButton } from "smooth-code/copy-button"
@@ -32,6 +32,7 @@ type EditorTweenProps = {
   backward: boolean
   codeConfig: CodeConfig
   frameProps?: Partial<EditorFrameProps>
+  files: CodeFile[]
 } & DivProps
 
 const DEFAULT_STEP: EditorStep = {
@@ -52,6 +53,7 @@ function EditorTween({
   backward,
   codeConfig,
   frameProps = {},
+  files,
   ...divProps
 }: EditorTweenProps) {
   const ref = React.createRef<HTMLDivElement>()
@@ -128,15 +130,24 @@ function EditorTween({
       backward={backward}
     />
   )
+
+  const selectLanguages = Array.isArray(
+    config.selectLanguages
+  )
+    ? config.selectLanguages
+    : []
+
   return (
     <EditorFrame
       ref={ref}
       {...framePropsWithHeight}
+      selectLanguages={selectLanguages}
       northPanel={northPanel}
       southPanel={southPanel}
       terminalPanel={terminalPanel}
       northButton={northButtons}
       southButton={southCopyButton}
+      files={files}
     />
   )
 }

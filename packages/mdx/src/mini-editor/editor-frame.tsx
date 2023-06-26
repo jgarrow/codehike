@@ -1,5 +1,8 @@
 import React from "react"
 import { FrameButtons } from "../mini-frame"
+import { LanguageContext } from "mdx-client/code"
+import { SelectLanguage } from "smooth-code/code-tween"
+import { CodeFile } from "./editor-shift"
 
 export { getPanelStyles }
 export type {
@@ -29,6 +32,8 @@ type EditorFrameProps = {
   height?: number
   northButton?: React.ReactNode
   southButton?: React.ReactNode
+  selectLanguages?: SelectLanguage[] | []
+  files: CodeFile[]
   onTabClick?: (filename: string) => void
 } & React.PropsWithoutRef<JSX.IntrinsicElements["div"]>
 
@@ -46,10 +51,17 @@ export const EditorFrame = React.forwardRef<
     southButton,
     className,
     onTabClick,
+    selectLanguages,
+    files,
     ...rest
   },
   ref
 ) {
+  const activeTab = northPanel.tabs.find(tab => tab.active)
+  const activeFile = files.find(
+    file => file.name === activeTab?.title
+  )
+
   return (
     <div
       ref={ref}
@@ -61,11 +73,17 @@ export const EditorFrame = React.forwardRef<
         <TabsContainer
           tabs={northPanel.tabs}
           showFrameButtons={true}
-          button={northButton}
           panel="north"
           onTabClick={onTabClick}
         />
       </div>
+
+      <LanguageSelector
+        activeFile={activeFile}
+        languages={selectLanguages}
+        button={northButton}
+      />
+
       <div
         data-ch-panel="north"
         style={northPanel.style}
@@ -325,4 +343,94 @@ function getPanelStyles(
 
 function tween(a: number, b: number, t: number) {
   return a + (b - a) * t
+}
+
+// case switch to map language to language name
+function getLanguageName(language) {
+  switch (language) {
+    case "sh":
+      return "shell"
+    case "bash":
+      return "shell"
+    case "curl":
+      return "shell"
+    case "nodejs":
+      return "js"
+    default:
+      return language
+  }
+}
+
+type LanguageSelectorProps = {
+  activeFile: CodeFile
+  languages: SelectLanguage[]
+  button?: React.ReactNode
+}
+
+function LanguageSelector({
+  activeFile,
+  languages,
+  button,
+}: LanguageSelectorProps) {
+  const { language, setLanguage } =
+    React.useContext(LanguageContext)
+
+  let languageName = language
+
+  if (["sh", "bash", "curl"].includes(languageName)) {
+    languageName = "shell"
+  }
+
+  return (
+    <div className="ch-language-selector">
+      <div className="ch-language-selector-content">
+        <span>Language:</span>
+        {activeFile.codeInDiffLangs.length ? (
+          <label
+            htmlFor="language"
+            className="ch-language-selector-lang"
+          >
+            <select
+              name="language"
+              value={getLanguageName(language)}
+              defaultValue={getLanguageName(language)}
+              onChange={event => {
+                const newLanguage = event.target.value
+                setLanguage(newLanguage)
+              }}
+              style={{
+                width: `calc(${
+                  getLanguageName(languageName).length
+                }ch + 12px + 16px)`,
+              }}
+            >
+              {languages.map(({ name }) => {
+                let langName = name
+
+                if (["sh", "bash", "curl"].includes(name)) {
+                  langName = "shell"
+                }
+
+                return (
+                  <option
+                    key={name}
+                    value={getLanguageName(name)}
+                  >
+                    {langName}
+                  </option>
+                )
+              })}
+            </select>
+          </label>
+        ) : (
+          <span className="ch-language-selector-lang">
+            {language}
+          </span>
+        )}
+      </div>
+      <div className="ch-language-selector-buttons">
+        {button}
+      </div>
+    </div>
+  )
 }

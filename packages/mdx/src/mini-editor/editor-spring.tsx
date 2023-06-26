@@ -24,6 +24,7 @@ type EditorProps = EditorStep & {
   frameProps?: Partial<EditorFrameProps>
   codeConfig: CodeConfig
   springConfig?: SpringConfig
+  files: CodeFile[]
 } & DivProps
 
 function EditorSpring({
@@ -53,6 +54,7 @@ function EditorSpring({
       backward={false}
       prev={prev}
       next={next}
+      files={files}
       {...props}
     />
   )

@@ -1,6 +1,10 @@
 import React from "react"
 import { EditorProps, EditorStep } from "../mini-editor"
-import { InnerCode, updateEditorStep } from "./code"
+import {
+  InnerCode,
+  LanguageContext,
+  updateEditorStep,
+} from "./code"
 import { Scroller, Step as ScrollerStep } from "../scroller"
 import { Preview, PresetConfig } from "./preview"
 import { LinkableSection } from "./section"
@@ -17,17 +21,32 @@ type ScrollycodingProps = {
   className?: string
   style?: React.CSSProperties
   hasPreviewSteps?: boolean
+  otherCodeConfig?: Partial<EditorProps["codeConfig"]>
 }
 
 export function Scrollycoding(props) {
+  const codeConfig = {
+    ...props.codeConfig,
+    ...props?.otherCodeConfig,
+  }
+
   return (
     <Swap
       match={[
         [
-          props.codeConfig.staticMediaQuery,
-          <StaticScrollycoding {...props} />,
+          codeConfig.staticMediaQuery,
+          <StaticScrollycoding
+            {...props}
+            codeConfig={codeConfig}
+          />,
         ],
-        ["default", <DynamicScrollycoding {...props} />],
+        [
+          "default",
+          <DynamicScrollycoding
+            {...props}
+            codeConfig={codeConfig}
+          />,
+        ],
       ]}
     />
   )
@@ -142,6 +161,9 @@ function DynamicScrollycoding({
   })
 
   const tab = state.step
+  const [language, setLanguage] = React.useState(
+    tab.files[0].code.lang
+  )
 
   function onStepChange(index: number) {
     setState({ stepIndex: index, step: editorSteps[index] })
@@ -208,13 +230,17 @@ function DynamicScrollycoding({
         </Scroller>
       </div>
       <div className="ch-scrollycoding-sticker">
-        <InnerCode
-          showExpandButton={true}
-          {...rest}
-          {...(tab as any)}
-          codeConfig={codeConfig}
-          onTabClick={onTabClick}
-        />
+        <LanguageContext.Provider
+          value={{ language, setLanguage }}
+        >
+          <InnerCode
+            showExpandButton={true}
+            {...rest}
+            {...(tab as any)}
+            codeConfig={codeConfig}
+            onTabClick={onTabClick}
+          />
+        </LanguageContext.Provider>
         {presetConfig ? (
           <Preview
             className="ch-scrollycoding-preview"

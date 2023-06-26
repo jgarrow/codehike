@@ -118,3 +118,12 @@
   min-height: 1.5em;
   margin-right: 0.8em;
 }
+
+.ch-language-selector {
+  display: flex;
+  align-items: center;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-right: 8px;
+  color: white;
+}
