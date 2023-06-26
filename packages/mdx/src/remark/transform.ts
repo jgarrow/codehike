@@ -163,6 +163,7 @@ async function addConfig(
     staticMediaQuery: config.staticMediaQuery,
     lineNumbers: config.lineNumbers,
     showCopyButton: config.showCopyButton,
+    selectLanguages: config.selectLanguages,
     themeName,
   }
 

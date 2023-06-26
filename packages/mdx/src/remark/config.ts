@@ -1,10 +1,12 @@
 import { Theme } from "@code-hike/lighter"
+import { SelectLanguage } from "smooth-code/code-tween"
 
 export type CodeHikeConfig = {
   theme: Theme
   lineNumbers?: boolean
   autoImport?: boolean
   skipLanguages: string[]
+  selectLanguages?: SelectLanguage[]
   showExpandButton?: boolean
   showCopyButton?: boolean
   autoLink?: boolean

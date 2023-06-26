@@ -12,6 +12,7 @@ import { Code, mergeFocus } from "../utils"
 import { CodeNode, SuperNode } from "./nodes"
 import { CodeHikeConfig } from "./config"
 import { getCommentData } from "./comment-data"
+import { SelectLanguage } from "smooth-code/code-tween"
 
 export function isEditorNode(
   node: SuperNode,
@@ -112,10 +113,12 @@ export async function mapEditor(
   return props
 }
 
+export type File = CodeStep & FileOptions & { name: string }
+
 async function mapFile(
   { node, index, parent }: NodeInfo<CodeNode>,
   config: CodeHikeConfig
-): Promise<CodeStep & FileOptions & { name: string }> {
+): Promise<File & { codeInDiffLangs: File[] | [] }> {
   const { theme } = config
 
   const lang = (node.lang as string) || "text"
@@ -153,6 +156,67 @@ async function mapFile(
     parent
   )
 
+  const ogCode = await highlight({
+    code: node.value as string,
+    lang,
+    theme,
+  })
+
+  let codeInDiffLangs: Array<File> | [] = []
+
+  // create a new code for each language
+  // assuming that the file name is the same for all languages, minus the extension
+  if (
+    config.selectLanguages &&
+    options.multiLanguage &&
+    ogCode?.lines.length === 1
+  ) {
+    codeInDiffLangs = await Promise.all(
+      config.selectLanguages.map(async lang => {
+        const langCode =
+          await getCodeFromExternalFileIfNeeded(
+            ogCode,
+            config,
+            lang.name
+          )
+
+        const [commentAnnotations, commentFocus] =
+          extractAnnotationsFromCode(langCode, config)
+
+        // TODO: handle annotations that differ
+        // from the main code
+        const options = parseMetastring(
+          typeof node.meta === "string" ? node.meta : ""
+        )
+
+        const metaAnnotations =
+          getAnnotationsFromMetastring(options as any)
+
+        const jsxAnnotations = extractJSXAnnotations(
+          node,
+          index,
+          parent
+        )
+
+        return {
+          ...options,
+          focus: mergeFocus(options.focus, commentFocus),
+          lang,
+          code: langCode,
+          name: options.name || "",
+          annotations: [
+            ...metaAnnotations,
+            ...commentAnnotations,
+            ...jsxAnnotations,
+          ],
+          selectLanguages:
+            options.selectLanguages ??
+            config.selectLanguages,
+        }
+      })
+    )
+  }
+
   const file = {
     ...options,
     focus: mergeFocus(options.focus, commentFocus),
@@ -163,6 +227,7 @@ async function mapFile(
       ...commentAnnotations,
       ...jsxAnnotations,
     ],
+    codeInDiffLangs,
   }
 
   return file
@@ -176,7 +241,11 @@ type FileOptions = {
 
 function parseMetastring(
   metastring: string
-): FileOptions & { name: string } {
+): FileOptions & {
+  name: string
+  multiLanguage?: boolean
+  selectLanguages?: SelectLanguage[]
+} {
   const params = metastring.split(" ")
   const options = {} as FileOptions
   let name: string | null = null
@@ -195,7 +264,8 @@ function parseMetastring(
 
 async function getCodeFromExternalFileIfNeeded(
   code: Code,
-  config: CodeHikeConfig
+  config: CodeHikeConfig,
+  lang?: string
 ) {
   if (code?.lines?.length != 1) {
     return code
@@ -212,10 +282,11 @@ async function getCodeFromExternalFileIfNeeded(
     .map(t => t.content)
     .join("")
 
-  const [codepath, range] = commentData.data
+  const [codePath, range] = commentData.data
     ?.trim()
     .split(/\s+/)
 
+  let codepath = codePath
   let fs, path
 
   try {
@@ -239,6 +310,21 @@ Looks like node "fs" and "path" modules are not available.`
   Someone is calling the mdx compile function without setting the path.
   Open an issue on CodeHike's repo for help.`
     )
+  }
+
+  if (
+    lang &&
+    config.selectLanguages &&
+    Array.isArray(config.selectLanguages)
+  ) {
+    const ext = path.extname(codepath)
+    const newExt = config.selectLanguages.find(
+      language => language.name === lang
+    )?.fileExtension
+
+    if (newExt) {
+      codepath = codepath.replace(ext, `.${newExt}`)
+    }
   }
 
   const dir = path.dirname(config.filepath)
@@ -272,7 +358,7 @@ The range is not valid. Should be something like:
 
   return await highlight({
     code: content,
-    lang: code.lang,
+    lang: lang ?? code.lang,
     theme: config.theme,
   })
 }
