@@ -2471,7 +2471,6 @@ Looks like node "fs" and "path" modules are not available.`;
   Someone is calling the mdx compile function without setting the path.
   Open an issue on CodeHike's repo for help.`);
         }
-        console.log("lang in getCodeFromExternalFileIfNeeded: ", lang);
         if (lang &&
             config.selectLanguages &&
             Array.isArray(config.selectLanguages)) {
@@ -2480,13 +2479,6 @@ Looks like node "fs" and "path" modules are not available.`;
             if (newExt) {
                 codepath = codepath.replace(ext, `.${newExt}`);
             }
-            console.log({
-                lang,
-                selectLanguages: config.selectLanguages,
-                ext,
-                newExt,
-                codepath,
-            });
         }
         const dir = path.dirname(config.filepath);
         const absoluteCodepath = path.resolve(dir, codepath);

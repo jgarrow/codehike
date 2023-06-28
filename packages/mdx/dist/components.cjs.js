@@ -3054,7 +3054,6 @@ function EditorSpring(_a) {
             terminal,
         };
     }, [northPanel, southPanel, files, terminal]);
-    console.log("EditorSpring step: ", step);
     const { prev, next, t } = useStepSpring(step, springConfig);
     return (React__default["default"].createElement(EditorTween, Object.assign({ t: t, backward: false, prev: prev, next: next, files: files }, props)));
 }
@@ -3120,7 +3119,6 @@ function Code(props) {
     var _a;
     const [language, setLanguage] = React__default["default"].useState((_a = props.files.find(file => file.name === props.northPanel.active)) === null || _a === void 0 ? void 0 : _a.code.lang);
     const [step, setStep] = React__default["default"].useState(getCode(props, language));
-    console.log({ language, step });
     React__default["default"].useEffect(() => {
         const newStep = getCode(step, language);
         setStep(newStep);
@@ -3129,7 +3127,6 @@ function Code(props) {
         var _a;
         const newStep = updateEditorStep(step, filename, null);
         const newLanguage = (_a = newStep.files.find(file => file.name === filename)) === null || _a === void 0 ? void 0 : _a.code.lang;
-        console.log(Object.assign(Object.assign({}, step), newStep));
         setLanguage(newLanguage);
         setStep(Object.assign(Object.assign({}, step), newStep));
     }
