@@ -22,7 +22,8 @@ function getCode(step: CodeProps, language: string) {
         file?.codeInDiffLangs &&
         file?.codeInDiffLangs.length
           ? file?.codeInDiffLangs.find(
-              (fileCode: File) => fileCode.code.lang === language
+              (fileCode: File) =>
+                fileCode.code.lang === language
             )
           : null
 
@@ -58,7 +59,7 @@ export function Code(props: CodeProps) {
     const newLanguage = newStep.files.find(
       file => file.name === filename
     )?.code.lang
-    
+
     setLanguage(newLanguage)
     setStep({ ...step, ...newStep })
   }

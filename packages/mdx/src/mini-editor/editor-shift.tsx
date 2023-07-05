@@ -10,6 +10,7 @@ import { File } from "../remark/code"
 export type CodeFile = CodeStep & {
   name: string
   codeInDiffLangs?: File[] | []
+  hideFileTab?: boolean
 }
 
 type EditorPanel = {

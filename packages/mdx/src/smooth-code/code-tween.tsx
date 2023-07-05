@@ -48,12 +48,11 @@ export type CodeConfig = {
   triggerPosition?: TriggerPosition
   debug?: boolean
   themeName?: string
-  selectLanguages?: SelectLanguage[] | boolean
+  selectLanguages?: SelectLanguage | boolean
 }
 
 export type SelectLanguage = {
-  name: string
-  fileExtension: string
+  [key: string]: string
 }
 
 function useCodeShift({

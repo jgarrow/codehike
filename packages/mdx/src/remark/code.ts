@@ -13,6 +13,7 @@ import { CodeNode, SuperNode } from "./nodes"
 import { CodeHikeConfig } from "./config"
 import { getCommentData } from "./comment-data"
 import { SelectLanguage } from "smooth-code/code-tween"
+import { getCodeFromExternalFileIfNeeded } from "./code-utils"
 
 export function isEditorNode(
   node: SuperNode,
@@ -129,15 +130,22 @@ async function mapFile(
     theme,
   })
 
-  // if the code is a single line with a "from" annotation
-  code = await getCodeFromExternalFileIfNeeded(code, config)
-
-  const [commentAnnotations, commentFocus] =
-    extractAnnotationsFromCode(code, config)
-
   const options = parseMetastring(
     typeof node.meta === "string" ? node.meta : ""
   )
+
+  // if the code is a single line with a "from" annotation
+  const externalFileData =
+    await getCodeFromExternalFileIfNeeded(
+      code,
+      config,
+      options.multiLanguage,
+      lang
+    )
+  code = externalFileData.code
+
+  const [commentAnnotations, commentFocus] =
+    extractAnnotationsFromCode(code, config)
 
   const metaAnnotations = getAnnotationsFromMetastring(
     options as any
@@ -156,30 +164,15 @@ async function mapFile(
     parent
   )
 
-  const ogCode = await highlight({
-    code: node.value as string,
-    lang,
-    theme,
-  })
-
   let codeInDiffLangs: Array<File> | [] = []
 
-  // create a new code for each language
-  // assuming that the file name is the same for all languages, minus the extension
   if (
-    config.selectLanguages &&
     options.multiLanguage &&
-    ogCode?.lines.length === 1
+    externalFileData.codeInDiffLangs.length
   ) {
-    codeInDiffLangs = await Promise.all(
-      config.selectLanguages.map(async lang => {
-        const langCode =
-          await getCodeFromExternalFileIfNeeded(
-            ogCode,
-            config,
-            lang.name
-          )
-
+    codeInDiffLangs = externalFileData.codeInDiffLangs.map(
+      (diffLang: Code) => {
+        const langCode = diffLang
         const [commentAnnotations, commentFocus] =
           extractAnnotationsFromCode(langCode, config)
 
@@ -197,11 +190,10 @@ async function mapFile(
           index,
           parent
         )
-
         return {
           ...options,
           focus: mergeFocus(options.focus, commentFocus),
-          lang,
+          lang: langCode.lang,
           code: langCode,
           name: options.name || "",
           annotations: [
@@ -209,11 +201,8 @@ async function mapFile(
             ...commentAnnotations,
             ...jsxAnnotations,
           ],
-          selectLanguages:
-            options.selectLanguages ??
-            config.selectLanguages,
         }
-      })
+      }
     )
   }
 
@@ -244,7 +233,7 @@ function parseMetastring(
 ): FileOptions & {
   name: string
   multiLanguage?: boolean
-  selectLanguages?: SelectLanguage[]
+  selectLanguages?: SelectLanguage
 } {
   const params = metastring.split(" ")
   const options = {} as FileOptions
@@ -260,105 +249,4 @@ function parseMetastring(
     }
   })
   return { name: name || "", ...options }
-}
-
-async function getCodeFromExternalFileIfNeeded(
-  code: Code,
-  config: CodeHikeConfig,
-  lang?: string
-) {
-  if (code?.lines?.length != 1) {
-    return code
-  }
-
-  const firstLine = code.lines[0]
-  const commentData = getCommentData(firstLine, code.lang)
-
-  if (!commentData || commentData.key != "from") {
-    return code
-  }
-
-  const fileText = firstLine.tokens
-    .map(t => t.content)
-    .join("")
-
-  const [codePath, range] = commentData.data
-    ?.trim()
-    .split(/\s+/)
-
-  let codepath = codePath
-  let fs, path
-
-  try {
-    fs = (await import("fs")).default
-    path = (await import("path")).default
-    if (!fs || !fs.readFileSync || !path || !path.resolve) {
-      throw new Error("fs or path not found")
-    }
-  } catch (e) {
-    e.message = `Code Hike couldn't resolve this annotation:
-${fileText}
-Looks like node "fs" and "path" modules are not available.`
-    throw e
-  }
-
-  // if we don't know the path of the mdx file:
-  if (config.filepath === undefined) {
-    throw new Error(
-      `Code Hike couldn't resolve this annotation:
-  ${fileText}
-  Someone is calling the mdx compile function without setting the path.
-  Open an issue on CodeHike's repo for help.`
-    )
-  }
-
-  if (
-    lang &&
-    config.selectLanguages &&
-    Array.isArray(config.selectLanguages)
-  ) {
-    const ext = path.extname(codepath)
-    const newExt = config.selectLanguages.find(
-      language => language.name === lang
-    )?.fileExtension
-
-    if (newExt) {
-      codepath = codepath.replace(ext, `.${newExt}`)
-    }
-  }
-
-  const dir = path.dirname(config.filepath)
-  const absoluteCodepath = path.resolve(dir, codepath)
-
-  let content: string
-  try {
-    content = fs.readFileSync(absoluteCodepath, "utf8")
-  } catch (e) {
-    e.message = `Code Hike couldn't resolve this annotation:
-${fileText}
-${absoluteCodepath} doesn't exist.`
-    throw e
-  }
-
-  if (range) {
-    const [start, end] = range.split(":")
-    const startLine = parseInt(start)
-    const endLine = parseInt(end)
-    if (isNaN(startLine) || isNaN(endLine)) {
-      throw new Error(
-        `Code Hike couldn't resolve this annotation:
-${fileText}
-The range is not valid. Should be something like:
- ${codepath} 2:5`
-      )
-    }
-    const lines = content.split("\n")
-    content = lines.slice(startLine - 1, endLine).join("\n")
-  }
-
-  return await highlight({
-    code: content,
-    lang: lang ?? code.lang,
-    theme: config.theme,
-  })
 }

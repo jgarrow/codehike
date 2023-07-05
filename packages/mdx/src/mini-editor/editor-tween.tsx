@@ -4,7 +4,11 @@ import {
   EditorFrameProps,
 } from "./editor-frame"
 import { TerminalPanel } from "./terminal-panel"
-import { useTransition, EditorStep, CodeFile } from "./editor-shift"
+import {
+  useTransition,
+  EditorStep,
+  CodeFile,
+} from "./editor-shift"
 import { CodeConfig } from "../smooth-code"
 import { useLayoutEffect } from "../utils"
 import { CopyButton } from "smooth-code/copy-button"
@@ -131,11 +135,7 @@ function EditorTween({
     />
   )
 
-  const selectLanguages = Array.isArray(
-    config.selectLanguages
-  )
-    ? config.selectLanguages
-    : []
+  const selectLanguages = config.selectLanguages ?? {}
 
   return (
     <EditorFrame

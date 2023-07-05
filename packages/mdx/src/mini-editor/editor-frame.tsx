@@ -3,6 +3,7 @@ import { FrameButtons } from "../mini-frame"
 import { LanguageContext } from "mdx-client/code"
 import { SelectLanguage } from "smooth-code/code-tween"
 import { CodeFile } from "./editor-shift"
+import { File } from "remark/code"
 
 export { getPanelStyles }
 export type {
@@ -32,7 +33,7 @@ type EditorFrameProps = {
   height?: number
   northButton?: React.ReactNode
   southButton?: React.ReactNode
-  selectLanguages?: SelectLanguage[] | []
+  selectLanguages?: SelectLanguage | {}
   files: CodeFile[]
   onTabClick?: (filename: string) => void
 } & React.PropsWithoutRef<JSX.IntrinsicElements["div"]>
@@ -57,11 +58,11 @@ export const EditorFrame = React.forwardRef<
   },
   ref
 ) {
+  const hideFileTab = files[0].hideFileTab
   const activeTab = northPanel.tabs.find(tab => tab.active)
   const activeFile = files.find(
     file => file.name === activeTab?.title
   )
-
   return (
     <div
       ref={ref}
@@ -75,6 +76,7 @@ export const EditorFrame = React.forwardRef<
           showFrameButtons={true}
           panel="north"
           onTabClick={onTabClick}
+          hideFileTab={hideFileTab}
         />
       </div>
 
@@ -124,6 +126,7 @@ type TabsContainerProps = {
   topBorder?: boolean
   panel: "north" | "south"
   onTabClick?: (filename: string) => void
+  hideFileTab?: boolean
 }
 function TabsContainer({
   tabs,
@@ -132,6 +135,7 @@ function TabsContainer({
   topBorder,
   panel,
   onTabClick,
+  hideFileTab = false,
 }: TabsContainerProps) {
   return (
     <>
@@ -149,7 +153,12 @@ function TabsContainer({
           style={style}
           onClick={onTabClick && (() => onTabClick(title))}
         >
-          <TabTitle title={title} />
+          {/* 
+            Can't conditionally render this whole `tabs.map` 
+            because then the northPanel and southPanel aren't 
+            calculated correctly in the `useTransition` hook
+          */}
+          <TabTitle title={!hideFileTab ? title : null} />
         </div>
       ))}
       <div style={{ flex: 1, minWidth: "0.8em" }} />
@@ -363,7 +372,7 @@ function getLanguageName(language) {
 
 type LanguageSelectorProps = {
   activeFile: CodeFile
-  languages: SelectLanguage[]
+  languages: SelectLanguage
   button?: React.ReactNode
 }
 
@@ -372,6 +381,27 @@ function LanguageSelector({
   languages,
   button,
 }: LanguageSelectorProps) {
+  let languageOptions: SelectLanguage | {} =
+    React.useMemo(() => {
+      if (
+        activeFile?.codeInDiffLangs &&
+        activeFile?.codeInDiffLangs.length
+      ) {
+        return (
+          activeFile.codeInDiffLangs as File[]
+        ).reduce((acc, codeFile) => {
+          if (codeFile?.code?.lang in languages) {
+            acc[codeFile.code.lang] =
+              languages[codeFile.code.lang]
+          }
+
+          return acc
+        }, {})
+      }
+
+      return {}
+    }, [activeFile?.codeInDiffLangs, languages])
+
   const { language, setLanguage } =
     React.useContext(LanguageContext)
 
@@ -381,21 +411,30 @@ function LanguageSelector({
     languageName = "shell"
   }
 
+  // const getLanguageValue = (languageName: string) => {
+  //   const lang = Object.entries(languageOptions).find(
+  //     ([_, langName]) => langName === languageName
+  //   )
+
+  //   return lang ? lang[0] : language
+  // }
+
   return (
     <div className="ch-language-selector">
       <div className="ch-language-selector-content">
         <span>Language:</span>
-        {activeFile.codeInDiffLangs.length ? (
+        {activeFile?.codeInDiffLangs.length > 1 ? (
           <label
             htmlFor="language"
             className="ch-language-selector-lang"
           >
             <select
               name="language"
-              value={getLanguageName(language)}
-              defaultValue={getLanguageName(language)}
+              // defaultValue={getLanguageValue(language)}
+              defaultValue={language}
               onChange={event => {
                 const newLanguage = event.target.value
+                // setLanguage(languageOptions[newLanguage])
                 setLanguage(newLanguage)
               }}
               style={{
@@ -404,22 +443,27 @@ function LanguageSelector({
                 }ch + 12px + 16px)`,
               }}
             >
-              {languages.map(({ name }) => {
-                let langName = name
+              {Object.entries(languageOptions).map(
+                ([fileExtension, name]) => {
+                  let langName = name
 
-                if (["sh", "bash", "curl"].includes(name)) {
-                  langName = "shell"
+                  if (
+                    ["sh", "bash", "curl"].includes(name)
+                  ) {
+                    langName = "shell"
+                  }
+
+                  return (
+                    <option
+                      key={name}
+                      // value={fileExtension}
+                      value={name}
+                    >
+                      {getLanguageName(name).toUpperCase()}
+                    </option>
+                  )
                 }
-
-                return (
-                  <option
-                    key={name}
-                    value={getLanguageName(name)}
-                  >
-                    {langName}
-                  </option>
-                )
-              })}
+              )}
             </select>
           </label>
         ) : (

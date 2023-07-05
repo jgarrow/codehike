@@ -13,6 +13,18 @@ import { addConfigDefaults, CodeHikeConfig } from "./config"
 
 import type { Node } from "unist"
 import { getThemeColors } from "@code-hike/lighter"
+import { SelectLanguage } from "smooth-code/code-tween"
+import { LANGUAGE_MAP } from "./code-utils"
+
+function mergeLanguages(lang1: SelectLanguage, lang2: SelectLanguage = LANGUAGE_MAP): SelectLanguage {
+  const merged: SelectLanguage = { ...lang1 };
+
+  for (const key in lang2) {
+    merged[key] = lang2[key];
+  }
+
+  return merged;
+}
 
 const transforms = [
   transformPreviews,
@@ -163,7 +175,7 @@ async function addConfig(
     staticMediaQuery: config.staticMediaQuery,
     lineNumbers: config.lineNumbers,
     showCopyButton: config.showCopyButton,
-    selectLanguages: config.selectLanguages,
+    selectLanguages: mergeLanguages(config.selectLanguages),
     themeName,
   }
 
