@@ -66,11 +66,10 @@ declare type CodeConfig = {
     triggerPosition?: TriggerPosition;
     debug?: boolean;
     themeName?: string;
-    selectLanguages?: SelectLanguage[] | boolean;
+    selectLanguages?: SelectLanguage | boolean;
 };
 declare type SelectLanguage = {
-    name: string;
-    fileExtension: string;
+    [key: string]: string;
 };
 
 declare type CodeHikeConfig = {
@@ -78,7 +77,7 @@ declare type CodeHikeConfig = {
     lineNumbers?: boolean;
     autoImport?: boolean;
     skipLanguages: string[];
-    selectLanguages?: SelectLanguage$1[];
+    selectLanguages?: SelectLanguage$1;
     showExpandButton?: boolean;
     showCopyButton?: boolean;
     autoLink?: boolean;
@@ -98,6 +97,7 @@ declare type FileOptions = {
 declare type CodeFile = CodeStep & {
     name: string;
     codeInDiffLangs?: File[] | [];
+    hideFileTab?: boolean;
 };
 declare type EditorPanel = {
     tabs: string[];
@@ -128,7 +128,7 @@ declare type EditorFrameProps = {
     height?: number;
     northButton?: React$1.ReactNode;
     southButton?: React$1.ReactNode;
-    selectLanguages?: SelectLanguage$1[] | [];
+    selectLanguages?: SelectLanguage$1 | {};
     files: CodeFile[];
     onTabClick?: (filename: string) => void;
 } & React$1.PropsWithoutRef<JSX.IntrinsicElements["div"]>;

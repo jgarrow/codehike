@@ -2219,13 +2219,12 @@ function FrameButtons() {
 const EditorFrame = React__default["default"].forwardRef(function InnerEditorFrame(_a, ref) {
     var _b;
     var { northPanel, southPanel, terminalPanel, style, height, northButton, southButton, className, onTabClick, selectLanguages, files } = _a, rest = __rest(_a, ["northPanel", "southPanel", "terminalPanel", "style", "height", "northButton", "southButton", "className", "onTabClick", "selectLanguages", "files"]);
+    const hideFileTab = files[0].hideFileTab;
     const activeTab = northPanel.tabs.find(tab => tab.active);
     const activeFile = files.find(file => file.name === (activeTab === null || activeTab === void 0 ? void 0 : activeTab.title));
     return (React__default["default"].createElement("div", Object.assign({ ref: ref }, rest, { className: "ch-editor-frame", style: style }),
-        React__default["default"].createElement("div", { className: "ch-frame-title-bar" },
-            React__default["default"].createElement(TabsContainer, { tabs: northPanel.tabs, showFrameButtons: true, 
-                // button={northButton}
-                panel: "north", onTabClick: onTabClick })),
+        React__default["default"].createElement("div", { className: "ch-frame-title-bar", "data-hideFileTab": true },
+            React__default["default"].createElement(TabsContainer, { tabs: northPanel.tabs, showFrameButtons: true, panel: "north", onTabClick: onTabClick, hideFileTab: hideFileTab })),
         React__default["default"].createElement(LanguageSelector, { activeFile: activeFile, languages: selectLanguages, button: northButton }),
         React__default["default"].createElement("div", { "data-ch-panel": "north", style: northPanel.style, children: northPanel.children }),
         southPanel && (React__default["default"].createElement(React__default["default"].Fragment, null,
@@ -2235,12 +2234,12 @@ const EditorFrame = React__default["default"].forwardRef(function InnerEditorFra
                 React__default["default"].createElement(TabsContainer, { tabs: southPanel.tabs, showFrameButtons: false, button: southButton, topBorder: true, panel: "south", onTabClick: onTabClick })),
             React__default["default"].createElement("div", { "data-ch-panel": "south", children: southPanel.children, style: southPanel.style })))));
 });
-function TabsContainer({ tabs, button, showFrameButtons, topBorder, panel, onTabClick, }) {
+function TabsContainer({ tabs, button, showFrameButtons, topBorder, panel, onTabClick, hideFileTab = false, }) {
     return (React__default["default"].createElement(React__default["default"].Fragment, null,
         topBorder && (React__default["default"].createElement("div", { className: "ch-editor-group-border" })),
         showFrameButtons ? React__default["default"].createElement(FrameButtons, null) : React__default["default"].createElement("div", null),
         tabs.map(({ title, active, style }) => (React__default["default"].createElement("div", { key: title, title: title, "data-ch-tab": panel, "data-active": active, className: "ch-editor-tab", style: style, onClick: onTabClick && (() => onTabClick(title)) },
-            React__default["default"].createElement(TabTitle, { title: title })))),
+            React__default["default"].createElement(TabTitle, { title: !hideFileTab ? title : null })))),
         React__default["default"].createElement("div", { style: { flex: 1, minWidth: "0.8em" } }),
         button));
 }
@@ -2257,6 +2256,7 @@ function TabTitle({ title }) {
 }
 // case switch to map language to language name
 function getLanguageName(language) {
+    // return LANGUAGE_MAP.get(language) || language
     switch (language) {
         case "sh":
             return "shell";
@@ -2271,26 +2271,47 @@ function getLanguageName(language) {
     }
 }
 function LanguageSelector({ activeFile, languages, button, }) {
+    let languageOptions = React__default["default"].useMemo(() => {
+        if ((activeFile === null || activeFile === void 0 ? void 0 : activeFile.codeInDiffLangs) &&
+            (activeFile === null || activeFile === void 0 ? void 0 : activeFile.codeInDiffLangs.length)) {
+            return activeFile.codeInDiffLangs.reduce((acc, codeFile) => {
+                var _a;
+                if (((_a = codeFile === null || codeFile === void 0 ? void 0 : codeFile.code) === null || _a === void 0 ? void 0 : _a.lang) in languages) {
+                    acc[codeFile.code.lang] =
+                        languages[codeFile.code.lang];
+                }
+                return acc;
+            }, {});
+        }
+        return {};
+    }, [activeFile === null || activeFile === void 0 ? void 0 : activeFile.codeInDiffLangs, languages]);
     const { language, setLanguage } = React__default["default"].useContext(LanguageContext);
     let languageName = language;
     if (["sh", "bash", "curl"].includes(languageName)) {
         languageName = "shell";
     }
+    // const getLanguageValue = (languageName: string) => {
+    //   const lang = Object.entries(languageOptions).find(
+    //     ([_, langName]) => langName === languageName
+    //   )
+    //   return lang ? lang[0] : language
+    // }
     return (React__default["default"].createElement("div", { className: "ch-language-selector" },
         React__default["default"].createElement("div", { className: "ch-language-selector-content" },
             React__default["default"].createElement("span", null, "Language:"),
-            activeFile.codeInDiffLangs.length ? (React__default["default"].createElement("label", { htmlFor: "language", className: "ch-language-selector-lang" },
-                React__default["default"].createElement("select", { name: "language", value: getLanguageName(language), defaultValue: getLanguageName(language), onChange: event => {
+            (activeFile === null || activeFile === void 0 ? void 0 : activeFile.codeInDiffLangs.length) > 1 ? (React__default["default"].createElement("label", { htmlFor: "language", className: "ch-language-selector-lang" },
+                React__default["default"].createElement("select", { name: "language", 
+                    // defaultValue={getLanguageValue(language)}
+                    defaultValue: language, onChange: event => {
                         const newLanguage = event.target.value;
+                        // setLanguage(languageOptions[newLanguage])
                         setLanguage(newLanguage);
                     }, style: {
                         width: `calc(${getLanguageName(languageName).length}ch + 12px + 16px)`,
-                    } }, languages.map(({ name }) => {
-                    let langName = name;
-                    if (["sh", "bash", "curl"].includes(name)) {
-                        langName = "shell";
-                    }
-                    return (React__default["default"].createElement("option", { key: name, value: getLanguageName(name) }, langName));
+                    } }, Object.entries(languageOptions).map(([fileExtension, name]) => {
+                    return (React__default["default"].createElement("option", { key: name, 
+                        // value={fileExtension}
+                        value: name }, getLanguageName(name).toUpperCase()));
                 })))) : (React__default["default"].createElement("span", { className: "ch-language-selector-lang" }, language))),
         React__default["default"].createElement("div", { className: "ch-language-selector-buttons" }, button)));
 }
@@ -3012,6 +3033,7 @@ const DEFAULT_STEP = {
     northPanel: { active: "", tabs: [""], heightRatio: 1 },
 };
 function EditorTween(_a) {
+    var _b;
     var { prev = DEFAULT_STEP, next, t, backward, codeConfig, frameProps = {}, files } = _a, divProps = __rest(_a, ["prev", "next", "t", "backward", "codeConfig", "frameProps", "files"]);
     const ref = React__default["default"].createRef();
     const { showCopyButton, showExpandButton } = codeConfig, config = __rest(codeConfig, ["showCopyButton", "showExpandButton"]);
@@ -3032,9 +3054,7 @@ function EditorTween(_a) {
         showExpandButton ? (React__default["default"].createElement(ExpandButton, { className: "ch-editor-button", step: next || prev })) : undefined));
     const southCopyButton = showCopyButton ? (React__default["default"].createElement(CopyButton, { className: "ch-editor-button", content: southContent })) : undefined;
     const terminalPanel = (React__default["default"].createElement(TerminalPanel, { prev: prev.terminal, next: (next || prev).terminal, t: t, backward: backward }));
-    const selectLanguages = Array.isArray(config.selectLanguages)
-        ? config.selectLanguages
-        : [];
+    const selectLanguages = (_b = config.selectLanguages) !== null && _b !== void 0 ? _b : {};
     return (React__default["default"].createElement(EditorFrame, Object.assign({ ref: ref }, framePropsWithHeight, { selectLanguages: selectLanguages, northPanel: northPanel, southPanel: southPanel, terminalPanel: terminalPanel, northButton: northButtons, southButton: southCopyButton, files: files })));
 }
 

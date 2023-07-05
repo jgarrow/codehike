@@ -7,7 +7,7 @@ declare type CodeHikeConfig = {
     lineNumbers?: boolean;
     autoImport?: boolean;
     skipLanguages: string[];
-    selectLanguages?: SelectLanguage[];
+    selectLanguages?: SelectLanguage;
     showExpandButton?: boolean;
     showCopyButton?: boolean;
     autoLink?: boolean;

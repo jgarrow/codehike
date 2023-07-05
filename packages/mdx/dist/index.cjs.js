@@ -2283,6 +2283,328 @@ function isEmpty$1(obj) {
     return Object.keys(obj).length === 0;
 }
 
+// TODO: handle additional languages passed by user via config
+// left: language file extension
+// right: language name for syntax highlighting
+const LANGUAGE_MAP = {
+    abap: 'abap',
+    'actionscript-3': 'actionscript-3',
+    ada: 'ada',
+    apache: 'apache',
+    apex: 'apex',
+    apl: 'apl',
+    applescript: 'applescript',
+    ara: 'ara',
+    asm: 'asm',
+    astro: 'astro',
+    awk: 'awk',
+    ballerina: 'ballerina',
+    bat: 'bat',
+    batch: 'batch',
+    berry: 'berry',
+    be: 'be',
+    bibtex: 'bibtex',
+    bicep: 'bicep',
+    blade: 'blade',
+    c: 'c',
+    cadence: 'cadence',
+    cdc: 'cdc',
+    clarity: 'clarity',
+    clojure: 'clojure',
+    clj: 'clj',
+    cmake: 'cmake',
+    cobol: 'cobol',
+    codeql: 'codeql',
+    ql: 'ql',
+    coffee: 'coffee',
+    cpp: 'cpp',
+    crystal: 'crystal',
+    csharp: 'csharp',
+    'c#': 'c#',
+    cs: 'cs',
+    css: 'css',
+    cue: 'cue',
+    d: 'd',
+    dart: 'dart',
+    dax: 'dax',
+    diff: 'diff',
+    docker: 'docker',
+    dockerfile: 'dockerfile',
+    'dream-maker': 'dream-maker',
+    elixir: 'elixir',
+    elm: 'elm',
+    erb: 'erb',
+    erlang: 'erlang',
+    erl: 'erl',
+    fish: 'fish',
+    fsharp: 'fsharp',
+    'f#': 'f#',
+    fs: 'fs',
+    gdresource: 'gdresource',
+    gdscript: 'gdscript',
+    gdshader: 'gdshader',
+    gherkin: 'gherkin',
+    'git-commit': 'git-commit',
+    'git-rebase': 'git-rebase',
+    glsl: 'glsl',
+    gnuplot: 'gnuplot',
+    go: 'go',
+    graphql: 'graphql',
+    groovy: 'groovy',
+    hack: 'hack',
+    haml: 'haml',
+    handlebars: 'handlebars',
+    hbs: 'hbs',
+    haskell: 'haskell',
+    hs: 'hs',
+    hcl: 'hcl',
+    hlsl: 'hlsl',
+    html: 'html',
+    http: 'http',
+    imba: 'imba',
+    ini: 'ini',
+    properties: 'properties',
+    java: 'java',
+    javascript: 'javascript',
+    js: 'js',
+    'jinja-html': 'jinja-html',
+    jison: 'jison',
+    json: 'json',
+    json5: 'json5',
+    jsonc: 'jsonc',
+    jsonnet: 'jsonnet',
+    jssm: 'jssm',
+    fsl: 'fsl',
+    jsx: 'jsx',
+    julia: 'julia',
+    kotlin: 'kotlin',
+    kusto: 'kusto',
+    kql: 'kql',
+    latex: 'latex',
+    less: 'less',
+    liquid: 'liquid',
+    lisp: 'lisp',
+    logo: 'logo',
+    lua: 'lua',
+    make: 'make',
+    makefile: 'makefile',
+    markdown: 'markdown',
+    md: 'md',
+    marko: 'marko',
+    matlab: 'matlab',
+    mdx: 'mdx',
+    mermaid: 'mermaid',
+    nginx: 'nginx',
+    nim: 'nim',
+    nix: 'nix',
+    'objective-c': 'objective-c',
+    objc: 'objc',
+    'objective-cpp': 'objective-cpp',
+    ocaml: 'ocaml',
+    pascal: 'pascal',
+    perl: 'perl',
+    php: 'php',
+    plsql: 'plsql',
+    postcss: 'postcss',
+    powerquery: 'powerquery',
+    powershell: 'powershell',
+    ps: 'ps',
+    ps1: 'ps1',
+    prisma: 'prisma',
+    prolog: 'prolog',
+    proto: 'proto',
+    pug: 'pug',
+    jade: 'jade',
+    puppet: 'puppet',
+    purescript: 'purescript',
+    python: 'python',
+    py: 'py',
+    r: 'r',
+    raku: 'raku',
+    perl6: 'perl6',
+    razor: 'razor',
+    reg: 'reg',
+    rel: 'rel',
+    riscv: 'riscv',
+    rst: 'rst',
+    ruby: 'ruby',
+    rb: 'rb',
+    rust: 'rust',
+    rs: 'rs',
+    sas: 'sas',
+    sass: 'sass',
+    scala: 'scala',
+    scheme: 'scheme',
+    scss: 'scss',
+    shaderlab: 'shaderlab',
+    shader: 'shader',
+    shellscript: 'shellscript',
+    bash: 'bash',
+    console: 'console',
+    sh: 'sh',
+    shell: 'shell',
+    zsh: 'zsh',
+    smalltalk: 'smalltalk',
+    solidity: 'solidity',
+    sparql: 'sparql',
+    sql: 'sql',
+    'ssh-config': 'ssh-config',
+    stata: 'stata',
+    stylus: 'stylus',
+    styl: 'styl',
+    svelte: 'svelte',
+    swift: 'swift',
+    'system-verilog': 'system-verilog',
+    tasl: 'tasl',
+    tcl: 'tcl',
+    tex: 'tex',
+    toml: 'toml',
+    tsx: 'tsx',
+    turtle: 'turtle',
+    twig: 'twig',
+    typescript: 'typescript',
+    ts: 'ts',
+    v: 'v',
+    vb: 'vb',
+    cmd: 'cmd',
+    verilog: 'verilog',
+    vhdl: 'vhdl',
+    viml: 'viml',
+    vim: 'vim',
+    vimscript: 'vimscript',
+    'vue-html': 'vue-html',
+    vue: 'vue',
+    wasm: 'wasm',
+    wenyan: '文言',
+    wgsl: 'wgsl',
+    xml: 'xml',
+    xsl: 'xsl',
+    yaml: 'yaml',
+    yml: 'yml',
+    zenscript: 'zenscript'
+};
+function getExternalCodeComment(code) {
+    if ((code === null || code === void 0 ? void 0 : code.lines.length) !== 1) {
+        return code;
+    }
+    const firstLine = code.lines[0];
+    const commentData = getCommentData(firstLine, code.lang);
+    if (!commentData || commentData.key !== "from") {
+        return code;
+    }
+    return { firstLine, commentData };
+}
+function importFsAndPath(annotation) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let fs, path;
+        try {
+            fs = (yield Promise.resolve().then(function () { return /*#__PURE__*/_interopNamespace(require('fs')); })).default;
+            path = (yield Promise.resolve().then(function () { return /*#__PURE__*/_interopNamespace(require('path')); })).default;
+            if (!fs || !fs.readFileSync || !path || !path.resolve) {
+                throw new Error("fs or path not found");
+            }
+        }
+        catch (e) {
+            e.message = `Code Hike couldn't resolve this annotation:
+${annotation}
+Looks like node "fs" and "path" modules are not available.`;
+            throw e;
+        }
+        return { fs, path };
+    });
+}
+function getContentFromFile({ fs, absoluteCodepath, codepath, fileText, range, }) {
+    return __awaiter(this, void 0, void 0, function* () {
+        let content;
+        try {
+            content = fs.readFileSync(absoluteCodepath, "utf8");
+        }
+        catch (e) {
+            e.message = `Code Hike couldn't resolve this annotation:
+${fileText}
+${absoluteCodepath} doesn't exist.`;
+            throw e;
+        }
+        if (range) {
+            const [start, end] = range.split(":");
+            const startLine = parseInt(start);
+            const endLine = parseInt(end);
+            if (isNaN(startLine) || isNaN(endLine)) {
+                throw new Error(`Code Hike couldn't resolve this annotation:
+${fileText}
+The range is not valid. Should be something like:
+ ${codepath} 2:5`);
+            }
+            const lines = content.split("\n");
+            content = lines.slice(startLine - 1, endLine).join("\n");
+        }
+        return content;
+    });
+}
+function isExternalCodeCommentData(obj) {
+    return "firstLine" in obj && "commentData" in obj;
+}
+function getCodeFromExternalFileIfNeeded(code, config, multiLanguage = false, lang) {
+    var _a;
+    return __awaiter(this, void 0, void 0, function* () {
+        const codeCommentData = getExternalCodeComment(code);
+        if (!isExternalCodeCommentData(codeCommentData)) {
+            return { code, codeInDiffLangs: [] };
+        }
+        const { firstLine, commentData } = codeCommentData;
+        const fileText = firstLine.tokens
+            .map(t => t.content)
+            .join("");
+        const [codepath, range] = (_a = commentData.data) === null || _a === void 0 ? void 0 : _a.trim().split(/\s+/);
+        const { fs, path } = yield importFsAndPath(fileText);
+        // if we don't know the path of the mdx file:
+        if (config.filepath === undefined) {
+            throw new Error(`Code Hike couldn't resolve this annotation:
+  ${fileText}
+  Someone is calling the mdx compile function without setting the path.
+  Open an issue on CodeHike's repo for help.`);
+        }
+        const dir = path.dirname(config.filepath);
+        const absoluteCodepath = path.resolve(dir, codepath);
+        let codeInDiffLangs = [];
+        if (multiLanguage) {
+            const sampleCodeDir = path.dirname(absoluteCodepath);
+            codeInDiffLangs = yield Promise.all(fs.readdirSync(sampleCodeDir).map((file) => __awaiter(this, void 0, void 0, function* () {
+                const ext = path.extname(file);
+                path.basename(file, ext);
+                const filepath = path.resolve(sampleCodeDir, file);
+                const content = yield getContentFromFile({
+                    fs,
+                    absoluteCodepath: filepath,
+                    codepath,
+                    fileText,
+                    range,
+                });
+                return yield highlight({
+                    code: content,
+                    lang: LANGUAGE_MAP[ext.slice(1)],
+                    theme: config.theme,
+                });
+            })));
+        }
+        const content = yield getContentFromFile({
+            fs,
+            absoluteCodepath,
+            codepath,
+            fileText,
+            range,
+        });
+        return {
+            code: yield highlight({
+                code: content,
+                lang: lang !== null && lang !== void 0 ? lang : code.lang,
+                theme: config.theme,
+            }),
+            codeInDiffLangs,
+        };
+    });
+}
+
 function isEditorNode(node, config) {
     if (node.type === "code") {
         const lang = node.lang || "";
@@ -2364,10 +2686,11 @@ function mapFile({ node, index, parent }, config) {
             lang,
             theme,
         });
-        // if the code is a single line with a "from" annotation
-        code = yield getCodeFromExternalFileIfNeeded(code, config);
-        const [commentAnnotations, commentFocus] = extractAnnotationsFromCode(code, config);
         const options = parseMetastring(typeof node.meta === "string" ? node.meta : "");
+        // if the code is a single line with a "from" annotation
+        const externalFileData = yield getCodeFromExternalFileIfNeeded(code, config, options.multiLanguage, lang);
+        code = externalFileData.code;
+        const [commentAnnotations, commentFocus] = extractAnnotationsFromCode(code, config);
         const metaAnnotations = getAnnotationsFromMetastring(options);
         // const linkAnnotations = extractLinks(
         //   node,
@@ -2376,37 +2699,23 @@ function mapFile({ node, index, parent }, config) {
         //   nodeValue as string
         // )
         const jsxAnnotations = extractJSXAnnotations(node, index, parent);
-        const ogCode = yield highlight({
-            code: node.value,
-            lang,
-            theme,
-        });
         let codeInDiffLangs = [];
-        // create a new code for each language
-        // assuming that the file name is the same for all languages, minus the extension
-        if (config.selectLanguages &&
-            options.multiLanguage &&
-            (ogCode === null || ogCode === void 0 ? void 0 : ogCode.lines.length) === 1) {
-            codeInDiffLangs = yield Promise.all(config.selectLanguages.map((lang) => __awaiter(this, void 0, void 0, function* () {
-                // const initialCode = await highlight({
-                //   code: node.value as string,
-                //   lang: lang.name,
-                //   theme,
-                // })
-                var _a;
-                const langCode = yield getCodeFromExternalFileIfNeeded(ogCode, config, lang.name);
+        if (options.multiLanguage &&
+            externalFileData.codeInDiffLangs.length) {
+            codeInDiffLangs = externalFileData.codeInDiffLangs.map((diffLang) => {
+                const langCode = diffLang;
                 const [commentAnnotations, commentFocus] = extractAnnotationsFromCode(langCode, config);
                 // TODO: handle annotations that differ
                 // from the main code
                 const options = parseMetastring(typeof node.meta === "string" ? node.meta : "");
                 const metaAnnotations = getAnnotationsFromMetastring(options);
                 const jsxAnnotations = extractJSXAnnotations(node, index, parent);
-                return Object.assign(Object.assign({}, options), { focus: mergeFocus(options.focus, commentFocus), lang, code: langCode, name: options.name || "", annotations: [
+                return Object.assign(Object.assign({}, options), { focus: mergeFocus(options.focus, commentFocus), lang: langCode.lang, code: langCode, name: options.name || "", annotations: [
                         ...metaAnnotations,
                         ...commentAnnotations,
                         ...jsxAnnotations,
-                    ], selectLanguages: (_a = options.selectLanguages) !== null && _a !== void 0 ? _a : config.selectLanguages });
-            })));
+                    ] });
+            });
         }
         const file = Object.assign(Object.assign({}, options), { focus: mergeFocus(options.focus, commentFocus), code, name: options.name || "", annotations: [
                 ...metaAnnotations,
@@ -2433,84 +2742,6 @@ function parseMetastring(metastring) {
         }
     });
     return Object.assign({ name: name || "" }, options);
-}
-function getCodeFromExternalFileIfNeeded(code, config, lang) {
-    var _a, _b, _c;
-    return __awaiter(this, void 0, void 0, function* () {
-        if (((_a = code === null || code === void 0 ? void 0 : code.lines) === null || _a === void 0 ? void 0 : _a.length) != 1) {
-            return code;
-        }
-        const firstLine = code.lines[0];
-        const commentData = getCommentData(firstLine, code.lang);
-        if (!commentData || commentData.key != "from") {
-            return code;
-        }
-        const fileText = firstLine.tokens
-            .map(t => t.content)
-            .join("");
-        const [codePath, range] = (_b = commentData.data) === null || _b === void 0 ? void 0 : _b.trim().split(/\s+/);
-        let codepath = codePath;
-        let fs, path;
-        try {
-            fs = (yield Promise.resolve().then(function () { return /*#__PURE__*/_interopNamespace(require('fs')); })).default;
-            path = (yield Promise.resolve().then(function () { return /*#__PURE__*/_interopNamespace(require('path')); })).default;
-            if (!fs || !fs.readFileSync || !path || !path.resolve) {
-                throw new Error("fs or path not found");
-            }
-        }
-        catch (e) {
-            e.message = `Code Hike couldn't resolve this annotation:
-${fileText}
-Looks like node "fs" and "path" modules are not available.`;
-            throw e;
-        }
-        // if we don't know the path of the mdx file:
-        if (config.filepath === undefined) {
-            throw new Error(`Code Hike couldn't resolve this annotation:
-  ${fileText}
-  Someone is calling the mdx compile function without setting the path.
-  Open an issue on CodeHike's repo for help.`);
-        }
-        if (lang &&
-            config.selectLanguages &&
-            Array.isArray(config.selectLanguages)) {
-            const ext = path.extname(codepath);
-            const newExt = (_c = config.selectLanguages.find(language => language.name === lang)) === null || _c === void 0 ? void 0 : _c.fileExtension;
-            if (newExt) {
-                codepath = codepath.replace(ext, `.${newExt}`);
-            }
-        }
-        const dir = path.dirname(config.filepath);
-        const absoluteCodepath = path.resolve(dir, codepath);
-        let content;
-        try {
-            content = fs.readFileSync(absoluteCodepath, "utf8");
-        }
-        catch (e) {
-            e.message = `Code Hike couldn't resolve this annotation:
-${fileText}
-${absoluteCodepath} doesn't exist.`;
-            throw e;
-        }
-        if (range) {
-            const [start, end] = range.split(":");
-            const startLine = parseInt(start);
-            const endLine = parseInt(end);
-            if (isNaN(startLine) || isNaN(endLine)) {
-                throw new Error(`Code Hike couldn't resolve this annotation:
-${fileText}
-The range is not valid. Should be something like:
- ${codepath} 2:5`);
-            }
-            const lines = content.split("\n");
-            content = lines.slice(startLine - 1, endLine).join("\n");
-        }
-        return yield highlight({
-            code: content,
-            lang: lang !== null && lang !== void 0 ? lang : code.lang,
-            theme: config.theme,
-        });
-    });
 }
 
 function transformCodes(tree, config) {
@@ -3019,6 +3250,13 @@ function addConfigDefaults(config, cwd, filepath) {
     return Object.assign(Object.assign({ staticMediaQuery: "not screen, (max-width: 768px)" }, config), { theme: (config === null || config === void 0 ? void 0 : config.theme) || "dark-plus", autoImport: (config === null || config === void 0 ? void 0 : config.autoImport) === false ? false : true, skipLanguages: (config === null || config === void 0 ? void 0 : config.skipLanguages) || [], filepath });
 }
 
+function mergeLanguages(lang1, lang2 = LANGUAGE_MAP) {
+    const merged = Object.assign({}, lang1);
+    for (const key in lang2) {
+        merged[key] = lang2[key];
+    }
+    return merged;
+}
 const transforms = [
     transformPreviews,
     transformScrollycodings,
@@ -3120,7 +3358,7 @@ function addConfig(tree, config) {
             staticMediaQuery: config.staticMediaQuery,
             lineNumbers: config.lineNumbers,
             showCopyButton: config.showCopyButton,
-            selectLanguages: config.selectLanguages,
+            selectLanguages: mergeLanguages(config.selectLanguages),
             themeName,
         };
         tree.children.unshift({
