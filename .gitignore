@@ -11,6 +11,7 @@ storybook-static
 packages/playground/out
 packages/starter
 packages/mdx/components.d.ts
+**/dist/
 
 # Contentlayer
 .contentlayer
