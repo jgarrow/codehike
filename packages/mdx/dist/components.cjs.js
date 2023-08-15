@@ -2223,7 +2223,7 @@ const EditorFrame = React__default["default"].forwardRef(function InnerEditorFra
     const activeTab = northPanel.tabs.find(tab => tab.active);
     const activeFile = files.find(file => file.name === (activeTab === null || activeTab === void 0 ? void 0 : activeTab.title));
     return (React__default["default"].createElement("div", Object.assign({ ref: ref }, rest, { className: "ch-editor-frame", style: style }),
-        React__default["default"].createElement("div", { className: "ch-frame-title-bar", "data-hideFileTab": true },
+        React__default["default"].createElement("div", { className: "ch-frame-title-bar" },
             React__default["default"].createElement(TabsContainer, { tabs: northPanel.tabs, showFrameButtons: true, panel: "north", onTabClick: onTabClick, hideFileTab: hideFileTab })),
         React__default["default"].createElement(LanguageSelector, { activeFile: activeFile, languages: selectLanguages, button: northButton }),
         React__default["default"].createElement("div", { "data-ch-panel": "north", style: northPanel.style, children: northPanel.children }),
@@ -2256,7 +2256,6 @@ function TabTitle({ title }) {
 }
 // case switch to map language to language name
 function getLanguageName(language) {
-    // return LANGUAGE_MAP.get(language) || language
     switch (language) {
         case "sh":
             return "shell";

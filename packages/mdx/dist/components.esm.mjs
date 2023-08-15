@@ -2215,7 +2215,7 @@ const EditorFrame = React.forwardRef(function InnerEditorFrame(_a, ref) {
     const activeTab = northPanel.tabs.find(tab => tab.active);
     const activeFile = files.find(file => file.name === (activeTab === null || activeTab === void 0 ? void 0 : activeTab.title));
     return (React.createElement("div", Object.assign({ ref: ref }, rest, { className: "ch-editor-frame", style: style }),
-        React.createElement("div", { className: "ch-frame-title-bar", "data-hideFileTab": true },
+        React.createElement("div", { className: "ch-frame-title-bar" },
             React.createElement(TabsContainer, { tabs: northPanel.tabs, showFrameButtons: true, panel: "north", onTabClick: onTabClick, hideFileTab: hideFileTab })),
         React.createElement(LanguageSelector, { activeFile: activeFile, languages: selectLanguages, button: northButton }),
         React.createElement("div", { "data-ch-panel": "north", style: northPanel.style, children: northPanel.children }),
@@ -2248,7 +2248,6 @@ function TabTitle({ title }) {
 }
 // case switch to map language to language name
 function getLanguageName(language) {
-    // return LANGUAGE_MAP.get(language) || language
     switch (language) {
         case "sh":
             return "shell";
